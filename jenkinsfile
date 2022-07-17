@@ -1,0 +1,31 @@
+pipeline{
+    agent any
+    tools{
+        maven 'MAVEN_HOME'
+    }
+    stages{
+        stage('check the code'){
+            steps{
+            git url:'https://github.com/Maheshkmule/dockerdemo.git', branch:'main'
+            } 
+        }
+        stage('Build the code'){
+            steps{
+                sh 'mvn clean package'
+            }
+        }
+        stage('Build the docker image from docker file'){
+            steps{
+                sh 'docker image build -t maheshdevops.azurecr.io/dockerdemo:${BUILD_NUMBER} .'
+            }
+        }
+        stage('azure login and push the docker image to ACR hub'){
+            steps{
+                withCredentials([usernamePassword(credentialsId: 'azure-acr-credentials', passwordVariable: 'password', usernameVariable: 'username')]) {
+            sh 'docker login -u ${username} -p ${password} maheshdevops.azurecr.io'
+            sh 'docker image push maheshdevops.azurecr.io/dockerdemo:${BUILD_NUMBER} '
+}
+            }
+        }
+    }
+}
